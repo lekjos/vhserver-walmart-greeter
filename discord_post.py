@@ -99,6 +99,7 @@ end_date = datetime.now()
 date_file = open(lastupdated)
 start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
 date_file.close()
+changed = False
 
 ## check for updates and post to discord if any
 with open(vhlog) as f:
@@ -114,12 +115,14 @@ with open(vhlog) as f:
             print(greeting)
             webhook = DiscordWebhook(url='***REMOVED***', content=greeting)
             response = webhook.execute()
+            changed = True
 
 
 ## set last_updated time to end_date
-date_file = open(lastupdated, "w")
-date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
-date_file.close()
+if changed == True:
+    date_file = open(lastupdated, "w")
+    date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
+    date_file.close()
 
 
 
