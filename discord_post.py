@@ -91,18 +91,13 @@ def extract_date(line):
     fmt = '%m/%d/%Y %H:%M:%S'
     return datetime.strptime(line[:19], fmt)
 
-
+## get current time and last updated time
 end_date = datetime.now()
-print (end_date)
-
-
-
 date_file = open('last_updated.txt')
 start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
 date_file.close()
 
-print(start_date)
-
+## check for updates and post to discord if any
 with open('example.log') as f:
     for line in f:
         if start_date < extract_date(line) < end_date:
@@ -119,7 +114,7 @@ with open('example.log') as f:
 
 ## set last_updated time to end_date
 date_file = open('last_updated.txt', "w")
-date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S')
+date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
 date_file.close()
 
 
