@@ -112,8 +112,8 @@ with open(vhlog) as f:
                 incoming = True
             greeting = generate_greeting(client_id, incoming)
             print(greeting)
-            #webhook = DiscordWebhook(url='***REMOVED***', content=greeting)
-            #response = webhook.execute()
+            webhook = DiscordWebhook(url='***REMOVED***', content=greeting)
+            response = webhook.execute()
 
 
 ## set last_updated time to end_date
