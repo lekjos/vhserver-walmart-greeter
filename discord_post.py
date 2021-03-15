@@ -5,6 +5,9 @@ import requests
 from datetime import date, timedelta, datetime
 import re
 
+vhlog = '/home/***REMOVED***/log/console/recent.log'
+lastupdated = '/home/***REMOVED***/source/vhserver_tools/last_updated.txt'
+
 def get_username(steam_id):
 
     response = requests.get('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=***REMOVED***&format=json&steamids=' + str(steam_id))
@@ -93,12 +96,13 @@ def extract_date(line):
 
 ## get current time and last updated time
 end_date = datetime.now()
-date_file = open('last_updated.txt')
+date_file = open(lastupdated)
 start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
 date_file.close()
 
 ## check for updates and post to discord if any
-with open('example.log') as f:
+with open(vhlog) as f:
+    # from https://stackoverflow.com/questions/18562479/what-is-the-quickest-way-to-extract-entries-in-a-log-file-between-two-dates-in-p
     for line in f:
         if start_date < extract_date(line) < end_date:
             client_id = re.search(r'\d+$', line).group(0)
@@ -113,7 +117,7 @@ with open('example.log') as f:
 
 
 ## set last_updated time to end_date
-date_file = open('last_updated.txt', "w")
+date_file = open(lastupdated, "w")
 date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
 date_file.close()
 
