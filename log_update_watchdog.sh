@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR="/home/***REMOVED***/log/console"
-inotifywait -m -e modify ~/log/console/vhserver-console.log while read f
+inotifywait -m -e modify ~/log/console/vhserver-console.log | while read f
 
 do
     echo 'do something';
