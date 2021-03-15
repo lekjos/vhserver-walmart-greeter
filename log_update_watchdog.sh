@@ -1,4 +1,4 @@
-#! /home/***REMOVED***/log/console
+#!/bin/bash
 DIR="/home/***REMOVED***/log/console"
 while inotifywait -m -e modify ~/log/console/vhserver-console.log; do
     cat vhserver-console.log | egrep 'Got handshake from client|Closing socket' > ./recent.log
