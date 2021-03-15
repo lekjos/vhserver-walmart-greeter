@@ -2,13 +2,13 @@ from discord_webhook import DiscordWebhook
 from client_identifier import get_username
 import random
 import requests
-
-
+from datetime import date, timedelta, datetime
+import re
 
 def get_username(steam_id):
 
     response = requests.get('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=***REMOVED***&format=json&steamids=' + str(steam_id))
-    print(response.text)
+    #print(response.text)
     if 'realname' in response.json()['response']['players'][0]:
         name = response.json()['response']['players'][0]['realname']
     else:
@@ -46,14 +46,7 @@ def check_name(steam_id):
     return context
 
 
-
-
-
-
-#webhook = DiscordWebhook(url='***REMOVED***', content='test message')
-#response = webhook.execute()
-
-def generate_greeting(steam_id):
+def generate_greeting(steam_id, incoming):
 
     user = check_name(steam_id)
     status = user['status']
@@ -61,16 +54,24 @@ def generate_greeting(steam_id):
     personaname = user['personaname']
     #print(status)
 
-    greetings = [
-        f'Hello {name}, or is it {personaname}? I don\'t know... I don\'t get paid enough.',
-        f'Hello {name}, toilet paper is on isle 24.',
-        f'Welcome to Walmart, {name}!',
-        f'Enjoy shopping at Walmart, {personaname}!',
-        f'Hi, {name} how can-- HEY, NO RIDING ON THE FRONT OF THE CARTS!',
-    ]
-    if status == True:
-        greetings.append(f'Welcome back {name}!')
-        greetings.append(f'Lookin\' fly today, {personaname}')
+    if incoming == True:
+        greetings = [
+            f'Hello {name}, or is it {personaname}? I don\'t know... I don\'t get paid enough.',
+            f'Hello {name}, toilet paper is on isle 24.',
+            f'Welcome to Walmart, {name}!',
+            f'Enjoy shopping at Walmart, {name}!',
+            f'Hi, {name} how can-- HEY, NO RIDING ON THE FRONT OF THE CARTS!',
+        ]
+        if status == True:
+            greetings.append(f'Welcome back {name}!')
+            greetings.append(f'Lookin\' fly today, {name}')
+    else: 
+        greetings = [
+            f'Goodbye {name}',
+            f'Thank you, come again {name}',
+            f'Thank you for shopping at Walmart, see you next time, {name}',
+            f'You better not have anything you didn\'t pay for {name}'
+        ]
 
     result = greetings[random.randint(0, len(greetings)-1)]
     return result
@@ -79,7 +80,50 @@ def generate_greeting(steam_id):
 #steam_id = ***REMOVED*** #***REMOVED***
 #steam_id = ***REMOVED*** #***REMOVED***
 #steam_id = ***REMOVED*** #***REMOVED***
-#steam_id = ***REMOVED*** #***REMOVED***
+# steam_id = ***REMOVED*** #***REMOVED***
+
+# greeting = generate_greeting(steam_id, False)
+#print(greeting)
 
 
-print(generate_greeting(steam_id))
+def extract_date(line):
+    """Return a datetime from a log line"""
+    fmt = '%m/%d/%Y %H:%M:%S'
+    return datetime.strptime(line[:19], fmt)
+
+
+end_date = datetime.now()
+print (end_date)
+
+
+
+date_file = open('last_updated.txt')
+start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
+date_file.close()
+
+print(start_date)
+
+with open('example.log') as f:
+    for line in f:
+        if start_date < extract_date(line) < end_date:
+            client_id = re.search(r'\d+$', line).group(0)
+            if "Closing socket" in line:
+                incoming = False
+            elif "Got handshake from client" in line:
+                incoming = True
+            greeting = generate_greeting(client_id, incoming)
+            print(greeting)
+            #webhook = DiscordWebhook(url='***REMOVED***', content=greeting)
+            #response = webhook.execute()
+
+
+## set last_updated time to end_date
+date_file = open('last_updated.txt', "w")
+date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S')
+date_file.close()
+
+
+
+
+
+
