@@ -63,10 +63,15 @@ def generate_greeting(steam_id, incoming):
             f'Hello {name}, toilet paper is on isle 24.',
             f'Welcome to Walmart, {name}!',
             f'Enjoy shopping at Walmart, {name}!',
-            f'Hi, {name} how can-- HEY, NO RIDING ON THE FRONT OF THE CARTS!',
+            f'Hi, {name} how can-- HEY, NO RIDING ON THE CARTS!',
+            f'What do you want, {personaname}?',
+            f'Yo, {personaname}, want to hear about the time i ran over a cat?',
+            f'We don\'t sell them, but possums are super tasty, {name}',
+            f'Hey {name}, Have you ever seen a grown Walmart Greeter Naked?',
         ]
         if status == True:
             greetings.append(f'Welcome back {name}!')
+            greetings.append(f'Wonderful seeing you again, {name}!')
             greetings.append(f'Lookin\' fly today, {name}')
     else: 
         greetings = [
@@ -75,6 +80,10 @@ def generate_greeting(steam_id, incoming):
             f'Thank you for shopping at Walmart, see you next time, {name}',
             f'You better not have anything you didn\'t pay for {name}'
         ]
+        if status == True:
+            greetings.append(f'I hate to watch {name} go, but I love to watch {name} leave...')
+            greetings.append(f'See ya {name}, wouldn\'t wanna be ya though.')
+
 
     result = greetings[random.randint(0, len(greetings)-1)]
     return result
@@ -100,6 +109,10 @@ date_file = open(lastupdated)
 start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
 date_file.close()
 changed = False
+
+## move start date back if more than minute old
+if end_date - start_date > timedelta(minutes=1):
+    start_date = end_date - datetime.timedelta(seconds=60)
 
 ## check for updates and post to discord if any
 with open(vhlog) as f:
