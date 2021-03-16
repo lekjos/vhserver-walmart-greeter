@@ -112,7 +112,7 @@ changed = False
 
 ## move start date back if more than minute old
 if end_date - start_date > timedelta(minutes=1):
-    start_date = end_date - datetime.timedelta(seconds=60)
+    start_date = end_date - timedelta(seconds=60)
 
 ## check for updates and post to discord if any
 with open(vhlog) as f:
