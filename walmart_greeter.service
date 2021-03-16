@@ -1,0 +1,13 @@
+[Unit]
+Description=Walmart Greeter Discord Bot for VHServer
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/home/***REMOVED***/source/vhserver_tools/log_update_watchdog.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target 
+
