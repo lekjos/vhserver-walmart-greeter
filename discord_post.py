@@ -9,7 +9,9 @@ vhlog = '/home/***REMOVED***/log/console/recent.log'
 lastupdated = '/home/***REMOVED***/source/vhserver_tools/last_updated.txt'
 
 def get_username(steam_id):
-
+    """
+    Returns dict of persona name and name from Steam Player Summaries API
+    """
     response = requests.get('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=***REMOVED***&format=json&steamids=' + str(steam_id))
     #print(response.text)
     if 'realname' in response.json()['response']['players'][0]:
@@ -24,6 +26,18 @@ def get_username(steam_id):
     return context
 
 def check_name(steam_id):
+    """
+    Checks if user steam id is known, then returns user dict:
+        {
+            'status': <bool> (Is user recognized),
+            'name': <str>
+            'personaname': <str>
+        }
+    If username is unknown, looks up user via steam ID
+    """
+    # To add a known ID update this dict:
+        # '<STEAM_ID:int>': ['<NAME>', '<PERSONA_NAME>'] 
+        # Where persona name is their Steam ID
     known_id = {
         '***REMOVED***': ['***REMOVED***', '***REMOVED***'],
         '***REMOVED***': ['***REMOVED***', '***REMOVED***'],
@@ -40,16 +54,25 @@ def check_name(steam_id):
         name = response['name']
         personaname = response['personaname']
         status = False
-    context = {
+    user_dict = {
         'status': status,
         'name': name,
         'personaname': personaname,
     }
-    #print(context)
-    return context
+    return user_dict
 
 
 def generate_greeting(steam_id, incoming):
+    """
+    Generates random greeting after looking up steam ID.
+
+    args
+        steam_id: <int>
+        incoming: <bool> (true if user joining server, else false)
+    
+    returns:
+        greeting: <str>
+    """
 
     user = check_name(steam_id)
     status = user['status']
@@ -88,12 +111,6 @@ def generate_greeting(steam_id, incoming):
     result = greetings[random.randint(0, len(greetings)-1)]
     return result
 
-#steam_id = ***REMOVED*** #***REMOVED***
-#steam_id = ***REMOVED*** #***REMOVED***
-#steam_id = ***REMOVED*** #***REMOVED***
-#steam_id = ***REMOVED*** #***REMOVED***
-# steam_id = ***REMOVED*** #***REMOVED***
-
 # greeting = generate_greeting(steam_id, False)
 #print(greeting)
 
@@ -110,8 +127,9 @@ start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
 date_file.close()
 changed = False
 
-## move start date back if more than minute old
-if end_date - start_date > timedelta(minutes=1):
+## Prevent posting status more than a minute old
+## Useful if listener is started when there are a bunch of old logs
+if end_date - start_date > timedelta(seconds=60):
     start_date = end_date - timedelta(seconds=60)
 
 ## check for updates and post to discord if any
