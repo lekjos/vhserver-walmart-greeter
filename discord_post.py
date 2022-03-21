@@ -8,7 +8,7 @@ def get_username(steam_id:int):
     """
     Returns dict of persona name and name from Steam Player Summaries API
     """
-    response = requests.get('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=***REMOVED***&format=json&steamids=' + str(steam_id))
+    response = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={str(steam_api_key)}&format=json&steamids={str(steam_id)}')
     if 'realname' in response.json()['response']['players'][0]:
         name = response.json()['response']['players'][0]['realname']
     else:
@@ -101,69 +101,74 @@ def extract_date(line):
     fmt = '%m/%d/%Y %H:%M:%S'
     return datetime.strptime(line[:19], fmt)
 
-# parse config file for paths and known ids
-config = ConfigParser()
-config.read('greeter_config.ini')
-vhlog = config['Paths']['RECENT_LOG']
-lastupdated = config['Paths']['LAST_UPDATED']
-webhook_url = config['Discord'].get('WEBHOOK_URL',False)
-suppress_old = True if config['Settings']['SUPPRESS_OLD'] == 'True' else False
-known_ids = dict()
-for key in config['Known Users']:
-    known_ids[key] = [w.strip() for w in str(config['Known Users'][key]).split(',')]
 
-## get current time and last updated time
-end_date = datetime.now()
+if __name__ == "__main__":
+    # parse config file for paths and known ids
+    config = ConfigParser()
+    config.read('greeter_config.ini')
+    vhlog = config['Paths']['RECENT_LOG']
+    lastupdated = config['Paths']['LAST_UPDATED']
+    webhook_url = config['Discord'].get('WEBHOOK_URL',False)
+    steam_api_key = config['Steam'].get('API_KEY',False)
+    if not steam_api_key:
+        raise ValueError("Steam API Key is required to look up users. Please add one to greeter_config.ini")
+    suppress_old = True if config['Settings']['SUPPRESS_OLD'] == 'True' else False
+    known_ids = dict()
+    for key in config['Known Users']:
+        known_ids[key] = [w.strip() for w in str(config['Known Users'][key]).split(',')]
 
-# create lastupdated file if none exists
-if not os.path.exists(os.path.abspath(lastupdated)):
-    print('Creating last_updated.txt')
-    os.makedirs(os.path.dirname(lastupdated),exist_ok=True)
-    new_file = open(lastupdated, 'a').close()
+    ## get current time and last updated time
+    end_date = datetime.now()
+
+    # create lastupdated file if none exists
+    if not os.path.exists(os.path.abspath(lastupdated)):
+        print('Creating last_updated.txt')
+        os.makedirs(os.path.dirname(lastupdated),exist_ok=True)
+        new_file = open(lastupdated, 'a').close()
 
 
-with open(lastupdated, 'r') as date_file:
-    if os.stat(lastupdated).st_size > 0:
-        data = date_file.read(19)
-        start_date = datetime.strptime(data, '%m/%d/%Y %H:%M:%S')
+    with open(lastupdated, 'r') as date_file:
+        if os.stat(lastupdated).st_size > 0:
+            data = date_file.read(19)
+            start_date = datetime.strptime(data, '%m/%d/%Y %H:%M:%S')
+        else:
+            start_date = datetime(2019,1,1)
+        changed = False
+
+    ## Prevent posting status more than a minute old
+    ## Useful if listener is started when there are a bunch of old logs
+    if suppress_old:
+        if end_date - start_date > timedelta(seconds=60):
+            start_date = end_date - timedelta(seconds=60)
+
+    ## check for updates and post to discord if any
+    with open(vhlog) as f:
+        # from https://stackoverflow.com/questions/18562479/what-is-the-quickest-way-to-extract-entries-in-a-log-file-between-two-dates-in-p
+        for line in f:
+            if start_date < extract_date(line) < end_date:
+                client_id = re.search(r'\d+$', line).group(0)
+                if "Closing socket" in line:
+                    incoming = False
+                elif "Got handshake from client" in line:
+                    incoming = True
+                greeting = generate_greeting(client_id, incoming)
+                
+                if webhook_url:
+                    print('Sending webhook:',greeting)
+                    webhook = DiscordWebhook(url=webhook_url, content=greeting)
+                    response = webhook.execute()
+                else:
+                    print('No Webhook_URL specified, didn\'t send greeting:', greeting)
+                changed = True
+
+
+    ## set last_updated time to end_date
+    if changed == True:
+        date_file = open(lastupdated, "w")
+        date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
+        date_file.close()
     else:
-        start_date = datetime(2019,1,1)
-    changed = False
-
-## Prevent posting status more than a minute old
-## Useful if listener is started when there are a bunch of old logs
-if suppress_old:
-    if end_date - start_date > timedelta(seconds=60):
-        start_date = end_date - timedelta(seconds=60)
-
-## check for updates and post to discord if any
-with open(vhlog) as f:
-    # from https://stackoverflow.com/questions/18562479/what-is-the-quickest-way-to-extract-entries-in-a-log-file-between-two-dates-in-p
-    for line in f:
-        if start_date < extract_date(line) < end_date:
-            client_id = re.search(r'\d+$', line).group(0)
-            if "Closing socket" in line:
-                incoming = False
-            elif "Got handshake from client" in line:
-                incoming = True
-            greeting = generate_greeting(client_id, incoming)
-            
-            if webhook_url:
-                print('Sending webhook:',greeting)
-                webhook = DiscordWebhook(url=webhook_url, content=greeting)
-                response = webhook.execute()
-            else:
-                print('No Webhook_URL specified, didn\'t send greeting:', greeting)
-            changed = True
-
-
-## set last_updated time to end_date
-if changed == True:
-    date_file = open(lastupdated, "w")
-    date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
-    date_file.close()
-else:
-    print(f'No changes found. Suppress old messages: {suppress_old}')
+        print(f'No changes found. Suppress old messages: {suppress_old}')
 
 
 
