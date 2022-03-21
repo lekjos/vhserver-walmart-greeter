@@ -1,4 +1,5 @@
 # Valheim Server Walmart Greeter
+![example bot output](https://repository-images.githubusercontent.com/347801102/edb722e7-6b68-4344-b153-88c6f01939f5 "Discord Walmart Greeter")
 This script posts in Discord whenever someone joins or leaves your Valheim server. Users are identified by their SteamID and greeted using their realname or personaname attribute. If you recognize a steamID and would like to customize the user's name (e.g. your friend didn't enter their real name into steam), you can add them to the Known ID's using `greeter_config.ini` and customize their name.
 
 Users who are in the Known ID's list are sometimes greeted in a more familiar way.
