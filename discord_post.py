@@ -143,7 +143,6 @@ with open(vhlog) as f:
             elif "Got handshake from client" in line:
                 incoming = True
             greeting = generate_greeting(client_id, incoming)
-            print(greeting)
             webhook = DiscordWebhook(url='***REMOVED***', content=greeting)
             response = webhook.execute()
             changed = True
