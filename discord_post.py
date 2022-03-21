@@ -1,29 +1,23 @@
+from configparser import ConfigParser
+from datetime import timedelta, datetime
 from discord_webhook import DiscordWebhook
-from client_identifier import get_username
-import random
-import requests
-from datetime import date, timedelta, datetime
-import re
+import os, random, requests, re
 
-vhlog = '/home/***REMOVED***/log/console/recent.log'
-lastupdated = '/home/***REMOVED***/source/vhserver_tools/last_updated.txt'
 
-def get_username(steam_id):
+def get_username(steam_id:int):
     """
     Returns dict of persona name and name from Steam Player Summaries API
     """
     response = requests.get('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=***REMOVED***&format=json&steamids=' + str(steam_id))
-    #print(response.text)
     if 'realname' in response.json()['response']['players'][0]:
         name = response.json()['response']['players'][0]['realname']
     else:
         name = response.json()['response']['players'][0]['personaname']
-    context = {
+    user_dict = {
         'personaname': response.json()['response']['players'][0]['personaname'],
         'name': name
     }
-    #print(context)
-    return context
+    return user_dict
 
 def check_name(steam_id):
     """
@@ -35,19 +29,10 @@ def check_name(steam_id):
         }
     If username is unknown, looks up user via steam ID
     """
-    # To add a known ID update this dict:
-        # '<STEAM_ID:int>': ['<NAME>', '<PERSONA_NAME>'] 
-        # Where persona name is their Steam ID
-    known_id = {
-        '***REMOVED***': ['***REMOVED***', '***REMOVED***'],
-        '***REMOVED***': ['***REMOVED***', '***REMOVED***'],
-        '***REMOVED***': ['***REMOVED***', '***REMOVED***'],
-        '***REMOVED***': ['***REMOVED***', '***REMOVED***'],
-        '***REMOVED***': ['***REMOVED***', '***REMOVED***']
-    }
-    if str(steam_id) in known_id:
-        name = known_id[str(steam_id)][0]
-        personaname = known_id[str(steam_id)][1]
+    
+    if str(steam_id) in known_ids:
+        name = known_ids[str(steam_id)][0]
+        personaname = known_ids[str(steam_id)][1]
         status = True
     else:
         response = get_username(steam_id)
@@ -60,7 +45,6 @@ def check_name(steam_id):
         'personaname': personaname,
     }
     return user_dict
-
 
 def generate_greeting(steam_id, incoming):
     """
@@ -88,7 +72,7 @@ def generate_greeting(steam_id, incoming):
             f'Enjoy shopping at Walmart, {name}!',
             f'Hi, {name} how can-- HEY, NO RIDING ON THE CARTS!',
             f'What do you want, {personaname}?',
-            f'Yo, {personaname}, want to hear about the time i ran over a cat?',
+            f'Yo, {personaname}, want to hear about the time I ran over a cat?',
             f'We don\'t sell them, but possums are super tasty, {name}',
             f'Hey {name}, Have you ever seen a grown Walmart Greeter Naked?',
         ]
@@ -96,6 +80,7 @@ def generate_greeting(steam_id, incoming):
             greetings.append(f'Welcome back {name}!')
             greetings.append(f'Wonderful seeing you again, {name}!')
             greetings.append(f'Lookin\' fly today, {name}')
+            greetings.append(f'Welcome back {name}... I\'m watching you...')
     else: 
         greetings = [
             f'Goodbye {name}',
@@ -111,26 +96,45 @@ def generate_greeting(steam_id, incoming):
     result = greetings[random.randint(0, len(greetings)-1)]
     return result
 
-# greeting = generate_greeting(steam_id, False)
-#print(greeting)
-
-
 def extract_date(line):
     """Return a datetime from a log line"""
     fmt = '%m/%d/%Y %H:%M:%S'
     return datetime.strptime(line[:19], fmt)
 
+# parse config file for paths and known ids
+config = ConfigParser()
+config.read('greeter_config.ini')
+vhlog = config['Paths']['RECENT_LOG']
+lastupdated = config['Paths']['LAST_UPDATED']
+webhook_url = config['Discord'].get('WEBHOOK_URL',False)
+suppress_old = True if config['Settings']['SUPPRESS_OLD'] == 'True' else False
+known_ids = dict()
+for key in config['Known Users']:
+    known_ids[key] = [w.strip() for w in str(config['Known Users'][key]).split(',')]
+
 ## get current time and last updated time
 end_date = datetime.now()
-date_file = open(lastupdated)
-start_date = datetime.strptime(date_file.read(19), '%m/%d/%Y %H:%M:%S')
-date_file.close()
-changed = False
+
+# create lastupdated file if none exists
+if not os.path.exists(os.path.abspath(lastupdated)):
+    print('Creating last_updated.txt')
+    os.makedirs(os.path.dirname(lastupdated),exist_ok=True)
+    new_file = open(lastupdated, 'a').close()
+
+
+with open(lastupdated, 'r') as date_file:
+    if os.stat(lastupdated).st_size > 0:
+        data = date_file.read(19)
+        start_date = datetime.strptime(data, '%m/%d/%Y %H:%M:%S')
+    else:
+        start_date = datetime(2019,1,1)
+    changed = False
 
 ## Prevent posting status more than a minute old
 ## Useful if listener is started when there are a bunch of old logs
-if end_date - start_date > timedelta(seconds=60):
-    start_date = end_date - timedelta(seconds=60)
+if suppress_old:
+    if end_date - start_date > timedelta(seconds=60):
+        start_date = end_date - timedelta(seconds=60)
 
 ## check for updates and post to discord if any
 with open(vhlog) as f:
@@ -143,8 +147,11 @@ with open(vhlog) as f:
             elif "Got handshake from client" in line:
                 incoming = True
             greeting = generate_greeting(client_id, incoming)
-            webhook = DiscordWebhook(url='***REMOVED***', content=greeting)
-            response = webhook.execute()
+            
+            if webhook_url:
+                print('Sending webhook:',greeting)
+                webhook = DiscordWebhook(url=webhook_url, content=greeting)
+                response = webhook.execute()
             changed = True
 
 
@@ -153,6 +160,8 @@ if changed == True:
     date_file = open(lastupdated, "w")
     date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
     date_file.close()
+else:
+    print('No changes found.')
 
 
 
