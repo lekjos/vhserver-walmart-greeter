@@ -6,7 +6,7 @@ Users who are in the Known ID's list are sometimes greeted in a more familiar wa
 To customize the greetings, edit `discord_post.generate_greeting`.
 
 ## Background
-I don't really game much anymore, but I was asked to host a Valheim Server on my Ubuntu Server. After building a really bad hut in the game and hunting a few deer, I got bored and decided to make Discord Bot that greeted my friends on the server when they joined or left the game. 
+I don't game anymore, but I was asked to host a Valheim Server on my Ubuntu Server. After building a really bad shack in the game and hunting a few deer, I got bored and decided to make Discord Bot that greeted my friends on the server when they joined or left the game. 
 
 ## Setup Instructions
 1. Fork this repo and clone to your Server
