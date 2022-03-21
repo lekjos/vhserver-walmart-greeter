@@ -9,11 +9,14 @@
 # Description:       Updates recent.log when changes made to vh log
 ### END INIT INFO
 
-DIR="/home/***REMOVED***/log/console"
-inotifywait -m -e modify /home/***REMOVED***/log/console/vhserver-console.log | while read f
+LOG_PATH=/home/***REMOVED***/log/console/vhserver-console.log #path to vhserver console log
+RECENT_PATH=/home/***REMOVED***/log/console/recent.log #path to where you'd like to store recent.log (grep of vhserver console log)
+PROGRAM_PATH=/home/***REMOVED***/source/vhserver_tools/discord_post.py #path to discord_post.py
+
+inotifywait -m -e modify $LOG_PATH | while read f
 
 do
     echo 'log updated';
-    cat /home/***REMOVED***/log/console/vhserver-console.log | egrep 'Got handshake from client|Closing socket' > /home/***REMOVED***/log/console/recent.log;
-    python3 /home/***REMOVED***/source/vhserver_tools/discord_post.py;
+    cat $LOG_PATH | egrep 'Got handshake from client|Closing socket' > $RECENT_PATH;
+    python3 $PROGRAM_PATH;
 done
