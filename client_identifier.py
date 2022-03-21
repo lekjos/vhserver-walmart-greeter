@@ -9,9 +9,3 @@ def get_username(steam_id):
     }
     return context
 
-
-
-steam_id = ***REMOVED*** 
-
-get_username(steam_id)
-
