@@ -152,6 +152,8 @@ with open(vhlog) as f:
                 print('Sending webhook:',greeting)
                 webhook = DiscordWebhook(url=webhook_url, content=greeting)
                 response = webhook.execute()
+            else:
+                print('No Webhook_URL specified, didn\'t send greeting:', greeting)
             changed = True
 
 
@@ -161,7 +163,7 @@ if changed == True:
     date_file.write(end_date.strftime('%m/%d/%Y %H:%M:%S'))
     date_file.close()
 else:
-    print('No changes found.')
+    print(f'No changes found. Suppress old messages: {suppress_old}')
 
 
 
