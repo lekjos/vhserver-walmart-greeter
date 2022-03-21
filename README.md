@@ -9,12 +9,13 @@ To customize the greetings, edit `discord_post.generate_greeting`.
 I don't really game much anymore, but I was asked to host a Valheim Server on my Ubuntu Server. After building a really bad hut in the game and hunting a few deer, I got bored and decided to make Discord Bot that greeted my friends on the server when they joined or left the game. 
 
 ## Setup Instructions
-1. Fork this repo and clone to your valheim server
-2. Update the following variables in `log_update_watchdog.sh`:
+1. Fork this repo and clone to your Server
+2. Create a Discord Webhook, note the URL
+3. Update the following variables in `log_update_watchdog.sh`:
     1. `LOG_PATH`: Should be the path to your instance of vhserver-console.log,
     2. `RECENT_PATH`: Is where the shell script will grep to, this is a new file created by the script
     3. `PROGRAM_PATH`: Points to `discord_post.py`, where you cloned the repo to
-3. Update `greeter_config.ini`:
+4. Update `greeter_config.ini`:
     1. `RECENT_LOG` should match `RECENT_PATH` above.
     2. `WEBHOOK_URL` should be added for whatever channel you want to post to in Discord.
 

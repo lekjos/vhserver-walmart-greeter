@@ -5,7 +5,7 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-ExecStart=/home/***REMOVED***/source/vhserver_tools/log_update_watchdog.sh
+ExecStart=/home/leif/source/vhserver_tools/log_update_watchdog.sh
 Restart=always
 
 [Install]

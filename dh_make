@@ -1,7 +1,7 @@
 Source: walmart-greeter
 Section: python
 Priority: extra
-Maintainer: ***REMOVED*** Kjos <hello@***REMOVED***kjos.com>
+Maintainer: Leif Kjos <hello@leifkjos.com>
 Build-Depends: debhelper (>= 9), python3.7, dh-virtualenv (>= 0.8)
 Standards-Version: 3.9.5
 

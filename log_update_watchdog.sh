@@ -9,9 +9,9 @@
 # Description:       Updates recent.log when changes made to vh log
 ### END INIT INFO
 
-LOG_PATH=/home/***REMOVED***/log/console/vhserver-console.log #path to vhserver console log
-RECENT_PATH=/home/***REMOVED***/log/console/recent.log #path to where you'd like to store recent.log (grep of vhserver console log)
-PROGRAM_PATH=/home/***REMOVED***/source/vhserver_tools/discord_post.py #path to discord_post.py
+LOG_PATH=/home/leif/log/console/vhserver-console.log #path to vhserver console log
+RECENT_PATH=/home/leif/log/console/recent.log #path to where you'd like to store recent.log (grep of vhserver console log)
+PROGRAM_PATH=/home/leif/source/vhserver_tools/discord_post.py #path to discord_post.py
 
 inotifywait -m -e modify $LOG_PATH | while read f
 
