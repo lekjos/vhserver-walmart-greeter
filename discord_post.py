@@ -2,13 +2,21 @@ from configparser import ConfigParser
 from datetime import timedelta, datetime
 from discord_webhook import DiscordWebhook
 import os, random, requests, re
+from typing import TypedDict, Union
 
+class UserNameResponseDict(TypedDict):
+    personaname:str
+    name:str
 
-def get_username(steam_id:int):
+def get_username(steam_id:int) -> Union[UserNameResponseDict,None]:
     """
     Returns dict of persona name and name from Steam Player Summaries API
     """
-    response = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={str(steam_api_key)}&format=json&steamids={str(steam_id)}')
+    try:
+        response = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={str(steam_api_key)}&format=json&steamids={str(steam_id)}')
+    except requests.exceptions.RequestException as e:
+        return None
+
     if 'realname' in response.json()['response']['players'][0]:
         name = response.json()['response']['players'][0]['realname']
     else:
@@ -36,9 +44,13 @@ def check_name(steam_id):
         status = True
     else:
         response = get_username(steam_id)
-        name = response['name']
-        personaname = response['personaname']
-        status = False
+        if response is not None:
+            name = response['name']
+            personaname = response['personaname']
+            status = False
+        else:
+            personaname = name = "Unknown Mystery Person"
+            status=False
     user_dict = {
         'status': status,
         'name': name,
@@ -106,16 +118,21 @@ if __name__ == "__main__":
     # parse config file for paths and known ids
     config = ConfigParser()
     config.read('greeter_config.ini')
-    vhlog = config['Paths']['RECENT_LOG']
-    lastupdated = config['Paths']['LAST_UPDATED']
+    vhlog = config['Paths'].get('RECENT_LOG','./example.log')
+    lastupdated = config['Paths'].get('LAST_UPDATED','./last_updated.txt')
     webhook_url = config['Discord'].get('WEBHOOK_URL',False)
     steam_api_key = config['Steam'].get('API_KEY',False)
+
     if not steam_api_key:
         raise ValueError("Steam API Key is required to look up users. Please add one to greeter_config.ini")
+    if not webhook_url:
+        raise ValueError("Webhook URL is required to post to discord. Please add one to greeter_config.ini")
+    
     suppress_old = True if config['Settings']['SUPPRESS_OLD'] == 'True' else False
     known_ids = dict()
-    for key in config['Known Users']:
-        known_ids[key] = [w.strip() for w in str(config['Known Users'][key]).split(',')]
+    if config['Known Users']:
+        for key in config['Known Users']:
+            known_ids[key] = [w.strip() for w in str(config['Known Users'][key]).split(',')]
 
     ## get current time and last updated time
     end_date = datetime.now()
