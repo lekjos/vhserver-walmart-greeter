@@ -12,7 +12,7 @@ config-parser==0.0.1
     # via -r requirements.in
 discord-webhook==0.12.0
     # via -r requirements.in
-idna==2.10
+idna==3.7
     # via requests
 pyyaml==6.0
     # via config-parser
